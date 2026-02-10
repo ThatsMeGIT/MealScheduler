@@ -5,32 +5,6 @@ class Database:
     connection = None
 
     @classmethod
-    def build_db(cls):
-        execute = cls.connect_to_db(cls).cursor
-        
-        # Tabelle 1: Rezepte
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS recipes (
-                id   INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL
-            )
-        """)
-
-        # Tabelle 2: Zutaten zu Rezepten (1 Rezept -> viele Zutaten)
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS recipe_ingredients (
-                id        INTEGER PRIMARY KEY AUTOINCREMENT,
-                recipe_id INTEGER NOT NULL,
-                ingredient TEXT NOT NULL,
-                FOREIGN KEY (recipe_id) REFERENCES recipes(id)
-            )
-        """)
-        
-        cls.disconnect_from_db
-        
-        
-
-    @classmethod
     def connect_to_db(cls):
         cls.connection = sqlite3.connect(cls.DB)
         return cls.connection
@@ -40,11 +14,50 @@ class Database:
         if cls.connection is not None:
             cls.connection.close()
             cls.connection = None
-            
+
     @classmethod
-    def add_recipe():
-        
-        
+    def build_db(cls):
+        con = cls.connect_to_db()
+        cur = con.cursor()
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS recipes (
+                id   INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL
+            )
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS recipe_ingredients (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                recipe_id  INTEGER NOT NULL,
+                ingredient TEXT NOT NULL,
+                FOREIGN KEY (recipe_id) REFERENCES recipes(id)
+            )
+        """)
+
+        con.commit()
+        cls.disconnect_from_db()
+
     @classmethod
-    def delete_recipe():
-        
+    def number_of_recipes(cls):
+        con = cls.connect_to_db()
+        cur = con.cursor()
+
+        cur.execute("SELECT COUNT(*) FROM recipes")
+        count = cur.fetchone()[0]
+
+        cls.disconnect_from_db()
+        return count
+
+    @classmethod
+    def add_recipe(cls):
+        pass
+
+    @classmethod
+    def delete_recipe(cls):
+        pass
+
+    @classmethod
+    def show_recipe(cls, recipe_id):
+        pass

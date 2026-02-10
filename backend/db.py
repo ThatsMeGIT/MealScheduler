@@ -1,10 +1,10 @@
 import sqlite3
 
-DB = "meals.db"
+str DB = "meals.db"
 
 def init_db():
-    con = sqlite3.connect(DB)
-    cur = con.cursor()
+    connection = sqlite3.connect(DB)
+    cur = connection.cursor()
 
     # Tabelle 1: Rezepte
     cur.execute("""

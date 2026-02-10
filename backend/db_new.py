@@ -98,10 +98,10 @@ class Database:
         """)
 
         # 3) Sinnvolle Indizes (Performance) > ChatGPT
-        cur.execute("CREATE INDEX IF NOT EXISTS idx_ri_recipe ON recipe_ingredients(recipe_id);")
-        cur.execute("CREATE INDEX IF NOT EXISTS idx_ri_ingredient ON recipe_ingredients(ingredient_id);")
-        cur.execute("CREATE INDEX IF NOT EXISTS idx_steps_recipe ON steps(recipe_id);")
-        cur.execute("CREATE INDEX IF NOT EXISTS idx_rt_tag ON recipe_tags(tag_id);")
+        #cur.execute("CREATE INDEX IF NOT EXISTS idx_ri_recipe ON recipe_ingredients(recipe_id);")
+        #cur.execute("CREATE INDEX IF NOT EXISTS idx_ri_ingredient ON recipe_ingredients(ingredient_id);")
+        #cur.execute("CREATE INDEX IF NOT EXISTS idx_steps_recipe ON steps(recipe_id);")
+        #cur.execute("CREATE INDEX IF NOT EXISTS idx_rt_tag ON recipe_tags(tag_id);")
 
         # Send the statements
         con.commit()

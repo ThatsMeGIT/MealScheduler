@@ -1,82 +1,161 @@
+# Not mine
 import sqlite3
 
-str DB = "meals.db"
+# Mine
+from db_dml import *
 
-def init_db():
-    connection = sqlite3.connect(DB)
-    cur = connection.cursor()
+class Database:
+    DB = "meals.db"
+    connection = None
 
-    # Tabelle 1: Rezepte
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS recipes (
-            id   INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL
-        )
-    """)
+    @classmethod
+    def connect_to_db(cls):
+        cls.connection = sqlite3.connect(cls.DB)
+        return cls.connection
 
-    # Tabelle 2: Zutaten zu Rezepten (1 Rezept -> viele Zutaten)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS recipe_ingredients (
-            id        INTEGER PRIMARY KEY AUTOINCREMENT,
-            recipe_id INTEGER NOT NULL,
-            ingredient TEXT NOT NULL,
-            FOREIGN KEY (recipe_id) REFERENCES recipes(id)
-        )
-    """)
+    @classmethod
+    def disconnect_from_db(cls):
+        if cls.connection is not None:
+            cls.connection.close()
+            cls.connection = None
 
-    con.commit()
-    con.close()
+    @classmethod
+    def build_db(cls):
+        con = cls.connect_to_db()
+        cur = con.cursor()
 
-def add_recipe(name, ingredients):
-    con = sqlite3.connect(DB)
-    cur = con.cursor()
+        # Wichtig: Foreign Keys in SQLite aktivieren (pro Connection!)
+        cur.execute("PRAGMA foreign_keys = ON;")
 
-    # 1) Rezept einfügen
-    cur.execute("INSERT INTO recipes (name) VALUES (?)", (name,))
-    recipe_id = cur.lastrowid  # ID des gerade eingefügten Rezepts
+        # 1) Entity Tables 
+        # 1.1) Create Reciipes
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS recipes (
+                id   INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL
+            )
+            """)
 
-    # 2) Zutaten einfügen (jede Zutat ist eine Zeile)
-    for ing in ingredients:
-        cur.execute(
-            "INSERT INTO recipe_ingredients (recipe_id, ingredient) VALUES (?, ?)",
-            (recipe_id, ing)
-        )
+        # 1.2) Create Ingredients
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS ingredients (
+                id   INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE
+            )
+        """)
 
-    con.commit()
-    con.close()
+        # 1.3) Create Units
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS units (
+                id   INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                abbr TEXT NOT NULL UNIQUE
+            )
+        """)
+        
+        # 1.4) Create Tags
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS tags (
+                id   INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE
+            )
+        """)
 
-def show_recipe(recipe_id):
-    con = sqlite3.connect(DB)
-    cur = con.cursor()
+        # 2) Junction Tables
+        # 2.1) Create Recipe/Ingredient
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS recipe_ingredients (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                recipe_id     INTEGER NOT NULL,
+                ingredient_id INTEGER NOT NULL,
+                quantity      REAL CHECK (quantity IS NULL OR quantity >= 0),
+                unit_id       INTEGER,
+                note          TEXT,
+                position      INTEGER NOT NULL DEFAULT 1 CHECK (position > 0),
+                FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+                FOREIGN KEY (ingredient_id) REFERENCES ingredients(id),
+                FOREIGN KEY (unit_id) REFERENCES units(id)
+            )
+        """)
 
-    # Rezeptname holen
-    cur.execute("SELECT name FROM recipes WHERE id = ?", (recipe_id,))
-    row = cur.fetchone()
-    if row is None:
-        print("Rezept nicht gefunden.")
+        # 2.2) Create Steps (for the recipe)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS steps (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                recipe_id   INTEGER NOT NULL,
+                step_no     INTEGER NOT NULL CHECK (step_no > 0),
+                instruction TEXT NOT NULL,
+                FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+                UNIQUE (recipe_id, step_no)
+            )
+        """)
+
+        # 2.3) Creates Recpie/Tags
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS recipe_tags (
+                recipe_id INTEGER NOT NULL,
+                tag_id    INTEGER NOT NULL,
+                PRIMARY KEY (recipe_id, tag_id),
+                FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+                FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+            )
+        """)
+
+        # 3) Sinnvolle Indizes (Performance) > ChatGPT
+        #cur.execute("CREATE INDEX IF NOT EXISTS idx_ri_recipe ON recipe_ingredients(recipe_id);")
+        #cur.execute("CREATE INDEX IF NOT EXISTS idx_ri_ingredient ON recipe_ingredients(ingredient_id);")
+        #cur.execute("CREATE INDEX IF NOT EXISTS idx_steps_recipe ON steps(recipe_id);")
+        #cur.execute("CREATE INDEX IF NOT EXISTS idx_rt_tag ON recipe_tags(tag_id);")
+
+        # Send the statements
+        con.commit()
+
+        # Closing connection
         con.close()
-        return
 
-    name = row[0]
 
-    # Zutaten holen
-    cur.execute("SELECT ingredient FROM recipe_ingredients WHERE recipe_id = ?", (recipe_id,))
-    ingredients = [r[0] for r in cur.fetchall()]
 
-    con.close()
+    @classmethod
+    def number_of_recipes(cls):
+        con = cls.connect_to_db()
+        cur = con.cursor()
 
-    print(f"Rezept: {name}")
-    print("Zutaten:")
-    for ing in ingredients:
-        print(f" - {ing}")
+        cur.execute("SELECT COUNT(*) FROM recipes")
+        count = cur.fetchone()[0]
 
-if __name__ == "__main__":
-    init_db()
+        cls.disconnect_from_db()
+        return count
 
-    add_recipe(
-        "Pasta mit Tomatensoße",
-        ["Nudeln", "Passierte Tomaten", "Zwiebel", "Knoblauch", "Salz"]
-    )
+    @classmethod
+    def add_recipe(cls, name, ingredients, steps, tags=None):
+        """
+        Adds a recipe with ingredients, steps, and optional tags.
 
-    # Zeig das erste Rezept (id = 1), weil wir gerade eins eingefügt haben
-    show_recipe(1)
+        ingredients: list of dicts, e.g.
+        [
+          {"name": "Tomate", "quantity": 3, "unit": "Stk", "note": "gewürfelt"},
+          {"name": "Olivenöl", "quantity": 2, "unit": "EL"},
+          {"name": "Salz", "quantity": None, "unit": None, "note": "nach Geschmack"},
+        ]
+
+        steps: list[str]
+        tags:  list[str] (optional)
+        """
+        if name is None or not str(name).strip():
+            raise ValueError("name must not be null or empty")
+
+        if ingredients is None or not isinstance(ingredients, list) or len(ingredients) == 0:
+            raise ValueError("ingredients must not be null or empty")
+
+        if steps is None or not isinstance(steps, list) or len(steps) == 0:
+            raise ValueError("steps must not be null or empty")
+        
+
+
+    @classmethod
+    def delete_recipe(cls):
+        pass
+
+    @classmethod
+    def show_recipe(cls, recipe_id):
+        pass

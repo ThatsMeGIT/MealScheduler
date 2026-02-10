@@ -123,54 +123,131 @@ class Database:
         return count
 
     @classmethod
-    def add_recipe(cls, name: str, ingredients: list[str]) -> int:
+    def add_recipe(cls, name, ingredients, steps, tags=None):
         """
-        Fügt ein Rezept + Zutaten hinzu und gibt die neue recipe_id zurück.
-        SQL-Injection-sicher durch Parameterbindung.
+        Adds a recipe with ingredients, steps, and optional tags.
+
+        ingredients: list of dicts, e.g.
+        [
+          {"name": "Tomate", "quantity": 3, "unit": "Stk", "note": "gewürfelt"},
+          {"name": "Olivenöl", "quantity": 2, "unit": "EL"},
+          {"name": "Salz", "quantity": None, "unit": None, "note": "nach Geschmack"},
+        ]
+
+        steps: list[str]
+        tags:  list[str] (optional)
         """
-        # Basic Validierung
-        if not isinstance(name, str) or not name.strip():
-            raise ValueError("name darf nicht leer sein")
-
-        if ingredients is None:
-            ingredients = []
-        if not isinstance(ingredients, list):
-            raise ValueError("ingredients muss eine Liste sein")
-
-        # Zutaten säubern: Strings trimmen, leere entfernen, Duplikate entfernen (Reihenfolge behalten)
-        cleaned = []
-        seen = set()
-        for ing in ingredients:
-            if ing is None:
-                continue
-            ing = str(ing).strip()
-            if not ing:
-                continue
-            if ing.lower() in seen:
-                continue
-            seen.add(ing.lower())
-            cleaned.append(ing)
+        if not name or not str(name).strip():
+            raise ValueError("Recipe name must not be empty.")
+        if not ingredients or len(ingredients) == 0:
+            raise ValueError("ingredients must not be empty.")
+        if not steps or len(steps) == 0:
+            raise ValueError("steps must not be empty.")
 
         con = cls.connect_to_db()
+        cur = con.cursor()
+
+        # Important: enable FK per connection
+        cur.execute("PRAGMA foreign_keys = ON;")
+
         try:
-            cur = con.cursor()
+            # Start transaction
+            cur.execute("BEGIN;")
 
-            # Transaktion: mit "with con:" committet sqlite automatisch, oder rollt bei Exception zurück
-            with con:
-                # 1) Rezept einfügen (Injection-sicher)
+            # 1) Insert recipe
+            cur.execute("INSERT INTO recipes (name) VALUES (?);", (name.strip(),))
+            recipe_id = cur.lastrowid
+
+            # helper: get unit_id by abbr
+            def unit_id_from_abbr(unit_abbr):
+                if unit_abbr is None:
+                    return None
+                unit_abbr = str(unit_abbr).strip()
+                if unit_abbr == "":
+                    return None
+
+                row = cur.execute(
+                    "SELECT id FROM units WHERE lower(abbr) = lower(?);",
+                    (unit_abbr,),
+                ).fetchone()
+
+                if row is None:
+                    # Option A (strict): error, so you keep your units clean
+                    raise ValueError(f"Unit '{unit_abbr}' not found in units table.")
+                    # Option B (auto-create): uncomment if you want:
+                    # cur.execute("INSERT INTO units (name, abbr) VALUES (?, ?);", (unit_abbr, unit_abbr))
+                    # return cur.lastrowid
+
+                return row[0]
+
+            # 2) Ingredients + recipe_ingredients
+            for pos, ing in enumerate(ingredients, start=1):
+                ing_name = (ing.get("name") if isinstance(ing, dict) else None)
+                if not ing_name or not str(ing_name).strip():
+                    raise ValueError("Each ingredient must have a non-empty 'name'.")
+
+                ing_name = str(ing_name).strip()
+                quantity = ing.get("quantity") if isinstance(ing, dict) else None
+                unit_abbr = ing.get("unit") if isinstance(ing, dict) else None
+                note = ing.get("note") if isinstance(ing, dict) else None
+
+                # ensure ingredient exists
+                cur.execute("INSERT OR IGNORE INTO ingredients (name) VALUES (?);", (ing_name,))
+                row = cur.execute(
+                    "SELECT id FROM ingredients WHERE lower(name) = lower(?);",
+                    (ing_name,),
+                ).fetchone()
+                ingredient_id = row[0]
+
+                unit_id = unit_id_from_abbr(unit_abbr)
+
                 cur.execute(
-                    "INSERT INTO recipes (name) VALUES (?)",
-                    (name.strip(),)
+                    """
+                    INSERT INTO recipe_ingredients
+                      (recipe_id, ingredient_id, quantity, unit_id, note, position)
+                    VALUES (?, ?, ?, ?, ?, ?);
+                    """,
+                    (recipe_id, ingredient_id, quantity, unit_id, note, pos),
                 )
-                recipe_id = cur.lastrowid
 
-                # 2) Zutaten einfügen (Injection-sicher)
-                if cleaned:
-                    cur.executemany(
-                        "INSERT INTO recipe_ingredients (recipe_id, ingredient) VALUES (?, ?)",
-                        [(recipe_id, ing) for ing in cleaned]
+            # 3) Steps
+            for i, s in enumerate(steps, start=1):
+                instruction = (s if s is not None else "")
+                instruction = str(instruction).strip()
+                if instruction == "":
+                    raise ValueError("Steps must not contain empty strings.")
+
+                cur.execute(
+                    "INSERT INTO steps (recipe_id, step_no, instruction) VALUES (?, ?, ?);",
+                    (recipe_id, i, instruction),
+                )
+
+            # 4) Tags (optional)
+            if tags:
+                for t in tags:
+                    tag_name = (t if t is not None else "")
+                    tag_name = str(tag_name).strip()
+                    if tag_name == "":
+                        continue
+
+                    cur.execute("INSERT OR IGNORE INTO tags (name) VALUES (?);", (tag_name,))
+                    tag_row = cur.execute(
+                        "SELECT id FROM tags WHERE lower(name) = lower(?);",
+                        (tag_name,),
+                    ).fetchone()
+                    tag_id = tag_row[0]
+
+                    cur.execute(
+                        "INSERT OR IGNORE INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?);",
+                        (recipe_id, tag_id),
                     )
-                return recipe_id
+
+            con.commit()
+            return recipe_id
+
+        except Exception:
+            con.rollback()
+            raise
 
         finally:
             cls.disconnect_from_db()

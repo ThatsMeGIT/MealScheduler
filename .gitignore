@@ -80,3 +80,4 @@ venv/
 *.pid
 *.seed
 *.db
+meals.db

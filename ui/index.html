@@ -1,141 +1,35 @@
-<!doctype html>
-<html lang="de" class="h-full scroll-smooth">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!DOCTYPE html>
+<html>
 
-    <title>MealScheduler</title>
-    <meta
-      name="description"
-      content="Plane deine Mahlzeiten, organisiere Rezepte und erstelle Einkaufslisten – alles an einem Ort."
-    />
+<head>
+  <meta charset="UTF-8" />
+  <title> Meal Scheduler </title>
+</head>
 
-    <!-- Tailwind (CDN) -->
-    <script src="https://cdn.tailwindcss.com"></script>
+<body>
+  <header>
+  </header>
+  <main>
+    <h1> Test </h1>
+  </main>
+  <footer class="bg-gray-900 text-gray-300">
+    <div class="max-w-7xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
 
-    <!-- Optional: Tailwind config (CDN) -->
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            boxShadow: {
-              soft: "0 10px 30px rgba(0,0,0,0.08)",
-            },
-          },
-        },
-        darkMode: "class",
-      };
-    </script>
+      <!-- Left -->
+      <p class="text-sm">
+        © 2026 MyWebsite. Alle Rechte vorbehalten.
+      </p>
 
-    <style>
-      /* Kleine Komfort-Verbesserungen */
-      .noise {
-        background-image:
-          radial-gradient(circle at 1px 1px, rgba(0,0,0,0.06) 1px, transparent 0);
-        background-size: 16px 16px;
-      }
-      .dark .noise {
-        background-image:
-          radial-gradient(circle at 1px 1px, rgba(255,255,255,0.08) 1px, transparent 0);
-      }
-    </style>
-  </head>
-
-  <body class="h-full bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-    <!-- Top gradient background -->
-    <div class="pointer-events-none absolute inset-x-0 top-0 -z-10">
-      <div
-        class="mx-auto h-72 max-w-7xl bg-gradient-to-b from-emerald-100/70 to-transparent blur-2xl dark:from-emerald-500/10"
-      ></div>
-    </div>
-
-    <!-- Header -->
-    <header class="sticky top-0 z-50 backdrop-blur bg-white/70 dark:bg-slate-950/70 border-b border-slate-200/60 dark:border-slate-800/60">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="flex h-16 items-center justify-between">
-          <!-- Brand -->
-          <a href="#" class="flex items-center gap-2">
-            <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-soft">
-              <!-- simple icon -->
-              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 11c0-4 4-7 8-7s8 3 8 7-4 9-8 9-8-5-8-9Z"/>
-                <path d="M8 14h8"/>
-              </svg>
-            </span>
-            <div class="leading-tight">
-              <div class="font-semibold">MealScheduler</div>
-              <div class="text-xs text-slate-600 dark:text-slate-400">Plan · Cook · Shop</div>
-            </div>
-          </a>
-
-          <!-- Desktop nav -->
-          <nav class="hidden md:flex items-center gap-6 text-sm">
-            <a class="text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white" href="#features">Features</a>
-            <a class="text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white" href="#planner">Planner</a>
-            <a class="text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white" href="#how">So funktioniert’s</a>
-            <a class="text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white" href="#faq">FAQ</a>
-          </nav>
-
-          <!-- Actions -->
-          <div class="flex items-center gap-2">
-            <!-- Dark mode toggle -->
-            <button
-              id="themeToggle"
-              type="button"
-              class="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-900"
-              aria-label="Dark Mode umschalten"
-            >
-              <svg id="iconSun" class="h-4 w-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z"/>
-                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
-              </svg>
-              <svg id="iconMoon" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 12.8A8 8 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8Z"/>
-              </svg>
-              <span class="hidden sm:inline">Theme</span>
-            </button>
-
-            <a
-              href="#"
-              class="hidden sm:inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-soft hover:bg-emerald-700"
-            >
-              Starten
-            </a>
-
-            <!-- Mobile menu button -->
-            <button
-              id="menuBtn"
-              type="button"
-              class="md:hidden inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 p-2 hover:bg-slate-100 dark:hover:bg-slate-900"
-              aria-label="Menü öffnen"
-              aria-expanded="false"
-            >
-              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 6h16M4 12h16M4 18h16"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Mobile nav -->
-        <div id="mobileNav" class="md:hidden hidden pb-4">
-          <div class="flex flex-col gap-2 text-sm">
-            <a class="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-900" href="#features">Features</a>
-            <a class="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-900" href="#planner">Planner</a>
-            <a class="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-900" href="#how">So funktioniert’s</a>
-            <a class="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-900" href="#faq">FAQ</a>
-            <a class="mt-2 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700" href="#">
-              Starten
-            </a>
-          </div>
-        </div>
+      <!-- Right -->
+      <div class="flex gap-6 text-sm">
+        <a href="#" class="hover:text-white transition">Impressum</a>
+        <a href="#" class="hover:text-white transition">Datenschutz</a>
+        <a href="#" class="hover:text-white transition">Kontakt</a>
       </div>
-    </header>
+    </div>
+  </footer>
 
-    <main>
-      <!-- Hero -->
-      <section class="relative">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-14 pb-10 sm:pt-20 sm:pb-16">
-          <div class="grid items-center gap-10 lg:grid-cols-2">
-            <div>
-              <div class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
+</body>
+<script type="module" src="/src/main.js"></script>
+
+</html>

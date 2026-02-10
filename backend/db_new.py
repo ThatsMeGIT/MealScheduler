@@ -51,8 +51,58 @@ class Database:
         return count
 
     @classmethod
-    def add_recipe(cls):
-        pass
+    def add_recipe(cls, name: str, ingredients: list[str]) -> int:
+        """
+        Fügt ein Rezept + Zutaten hinzu und gibt die neue recipe_id zurück.
+        SQL-Injection-sicher durch Parameterbindung.
+        """
+        # Basic Validierung
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("name darf nicht leer sein")
+
+        if ingredients is None:
+            ingredients = []
+        if not isinstance(ingredients, list):
+            raise ValueError("ingredients muss eine Liste sein")
+
+        # Zutaten säubern: Strings trimmen, leere entfernen, Duplikate entfernen (Reihenfolge behalten)
+        cleaned = []
+        seen = set()
+        for ing in ingredients:
+            if ing is None:
+                continue
+            ing = str(ing).strip()
+            if not ing:
+                continue
+            if ing.lower() in seen:
+                continue
+            seen.add(ing.lower())
+            cleaned.append(ing)
+
+        con = cls.connect_to_db()
+        try:
+            cur = con.cursor()
+
+            # Transaktion: mit "with con:" committet sqlite automatisch, oder rollt bei Exception zurück
+            with con:
+                # 1) Rezept einfügen (Injection-sicher)
+                cur.execute(
+                    "INSERT INTO recipes (name) VALUES (?)",
+                    (name.strip(),)
+                )
+                recipe_id = cur.lastrowid
+
+                # 2) Zutaten einfügen (Injection-sicher)
+                if cleaned:
+                    cur.executemany(
+                        "INSERT INTO recipe_ingredients (recipe_id, ingredient) VALUES (?, ?)",
+                        [(recipe_id, ing) for ing in cleaned]
+                    )
+                return recipe_id
+
+        finally:
+            cls.disconnect_from_db()
+
 
     @classmethod
     def delete_recipe(cls):

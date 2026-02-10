@@ -1,3 +1,5 @@
+# Only edits the elements of a table
+
 from abc import ABC, abstractmethod
 
 class Repository(ABC):
@@ -15,7 +17,7 @@ class Repository(ABC):
         pass
 
 
-class RecipeRepository(Repository):
+class RecipesRepository(Repository):
 
     def add(self, name, ingredients, steps, tags=None):
         print("adding recipe")
@@ -27,7 +29,7 @@ class RecipeRepository(Repository):
         print("editing recipe")
 
 
-class IngredientRepository(Repository):
+class IngredientsRepository(Repository):
     
     def add(self):
         print("adding Ingredient")

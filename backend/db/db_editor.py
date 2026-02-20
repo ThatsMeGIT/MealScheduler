@@ -1,4 +1,5 @@
-# Only edits the elements of a table
+# db_editor.py
+# Editiert, Löscht oder Fügt Einträge in die SQLite-Datenbank ein
 
 from abc import ABC, abstractmethod
 

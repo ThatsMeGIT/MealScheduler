@@ -1,5 +1,6 @@
 # db_builder.py
-# Erstellt die SQLite-DB-Struktur wie im Screenshot.
+# Erstellt die SQLite-Datenbank mit den nötigen Tabellen 
+# Alle Tabellen können auch wieder gelöscht werden, z.B. für Tests oder Neuaufbau
 
 from __future__ import annotations
 

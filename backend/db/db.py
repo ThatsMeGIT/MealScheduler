@@ -2,7 +2,7 @@
 import sqlite3
 
 # Mine
-from db_dml import *
+from backend.db.db_editor import *
 
 class Database:
     DB = "meals.db"

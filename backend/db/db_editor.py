@@ -3,7 +3,7 @@
 
 from abc import ABC, abstractmethod
 
-class Repository(ABC):
+class Editor(ABC):
 
     @abstractmethod
     def add(self, *args, **kwargs):
@@ -18,7 +18,7 @@ class Repository(ABC):
         pass
 
 
-class RecipesRepository(Repository):
+class RecipesEditor(Editor):
 
     def add(self, name, ingredients, steps, tags=None):
         sql = "INSERT INTO recipes (name) VALUES (?)"
@@ -34,7 +34,7 @@ class RecipesRepository(Repository):
         print("editing recipe")
 
 
-class IngredientsRepository(Repository):
+class IngredientsEditor(Editor):
     
     def add(self):
         sql = "INSERT INTO ingredients (name) VALUES (?)"
@@ -49,7 +49,7 @@ class IngredientsRepository(Repository):
         print("editing ingredient")
     
     
-class StepsRepository(Repository):
+class StepsEditor(Editor):
     
     def add(self):
         sql = "INSERT INTO steps (recipe_id, step_number, description) VALUES (?, ?, ?)"
@@ -64,7 +64,7 @@ class StepsRepository(Repository):
         print("editing Step")
     
     
-class TagsRepository(Repository):
+class TagsEditor(Editor):
     
     def add(self):
         sql = "INSERT INTO tags (name) VALUES (?)"
@@ -79,7 +79,7 @@ class TagsRepository(Repository):
         print("editing Tag")
     
     
-class UnitsRepository(Repository):
+class UnitsEditor(Editor):
     
     def add(self):
         sql = "INSERT INTO units (name, abbr) VALUES (?, ?)"
@@ -94,7 +94,7 @@ class UnitsRepository(Repository):
         print("editing Unit")
     
     
-class RecipeIngredientsRepository(Repository):
+class RecipeIngredientsEditor(Editor):
     
     def add(self):
         sql = "INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit_id, note, position) VALUES (?, ?, ?, ?, ?, ?)"
@@ -109,7 +109,7 @@ class RecipeIngredientsRepository(Repository):
         print("editing Recipe/Ingredient")
     
     
-class RecipeTagsRepository(Repository):
+class RecipeTagsEditor(Editor):
     
     def add(self):
         sql = "INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)"
